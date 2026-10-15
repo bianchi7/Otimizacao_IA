@@ -1,51 +1,72 @@
 import random
 import numpy as np
 import math
+import copy
 
 def f(x):  # função dos ouvintes das 17h as 00h
-    return (-2 *x**3 + 27 * x**2 - 108 * x + 240) * 1/8
+    return (-2 * x**3 + 27 * x**2 - 108 * x + 240) * 1/8
 
 def g(x):    #função de interferencia 
     return f(x) + 2 * math.sin(4*x)
 
-def fitness_max(posicao):
+def fitness(posicao):
     return g(posicao)
     
-def PSO(particula, iteracao, w, c1, c2, f):
+def PSO(particula, iteracao, w, c1, c2, fitness, m): #m = max(1) ou min(0)
     Xmin = 0
     Xmax = 7
 
+    if m not in (0, 1):
+        raise ValueError("M precisa ser 0 (min) ou 1 (max)")
+
     # AVALIE A QUALIDADE DO HORARIO EM RELAÇÃO A ELE MESMO
-    for i in particula:
-        x = random.uniform(Xmin, Xmax)  #Inicializar posição x[i] aleatória entre 0 e 7
-        v = random.uniform()      #Inicializar velocidade v[i]
-        qualidade = fitness_max(x)
-        pBest = x
+    x = [random.uniform(Xmin, Xmax) for _ in range(particula)]  #Inicializar posição x[i] aleatória entre 0 e 7
+    v = [random.uniform(-1, 1) for _ in range(particula)]  #Inicializar velocidade v[i]
+    pBest = x.copy()
+    pBestFitness = [fitness(pos) for pos in x] 
 
     # AVALIE A QUALIDADE DO HORARIO EM RELAÇÃO AOS OUTROS
-    #gbest = posição com melhor fitness (QUALIDADE) entre todas as partículas
-    gBest = 
+    if m == 1:
+        indice = pBestFitness.index(max(pBestFitness))
+    else:
+        indice = pBestFitness.index(min(pBestFitness))
+    gBest = pBest[indice]
+    gBestFitness = pBestFitness[indice]
 
     #Enquanto não atingir o critério de parada:
+    for _ in range(iteracao):
+        for i in range(particula):
+            r1 = random.random()
+            r2 = random.random()
 
-        for i in particula:
-            r1 = random.uniform()
-            r2 = random.uniform()
+            v[i] = w * v[i] + c1 * r1 * (pBest[i] - x[i]) + c2 * r2 * (gBest - x[i])  #Atualizar velocidade:
+            x[i] = x[i] + v[i]       #Atualizar posição:
 
-            v = w * v + c1 * r1 * (pBest - x) + c2 * r2 * (gBest - x)  #Atualizar velocidade:
-            x = x + v       #Atualizar posição:
+            # Manter posição no intervalo [0, 7]
+            x[i] = max(Xmin, min(Xmax, x[i]))
+
+            # Calcular fitness
+            qualidade = fitness(x[i])
+
+            if m == 1:
+                melhorou = qualidade > pBestFitness[i]
+            else:
+                melhorou = qualidade < pBestFitness[i]
+
+            if melhorou:
+                pBest[i] = x[i]
+                pBestFitness[i] = qualidade
+
+            # Verificar melhora global
+            if m == 1:
+                melhor_global = pBestFitness[i] > gBestFitness
+            else:
+                melhor_global = pBestFitness[i] < gBestFitness
+
+            if melhor_global:
+                gBest = pBest[i]
+                gBestFitness = pBestFitness[i]
+
+    return gBest, gBestFitness
+
         
-            x = random.uniform(Xmin, Xmax)    #Manter x[i] dentro do intervalo [0, 7]
-            #Calcular o novo fitness g(x[i])
-
-            #Se a posição atual for melhor que pbest[i]:
-                #pbest[i] = x[i]
-
-        #Atualizar gbest com o melhor pbest encontrado
-
-    #Retornar gbest e g(gbest)
-
-#Definir numero particulas
-#Definir o número máximo de iterações
-
-#Definir os parâmetros w, c1 e c2
